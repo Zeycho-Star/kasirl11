@@ -12,7 +12,60 @@ class User extends Component
     public $email;
     public $peran;
     public $password;
+    public $penggunaTerpilih;
 
+    public function pilihEdit($id){
+        $this->penggunaTerpilih = ModelsUser::findOrFail($id);
+        $this->nama = $this->penggunaTerpilih->name;
+        $this->email = $this->penggunaTerpilih->email;
+        $this->peran = $this->penggunaTerpilih->peran;
+        $this->pilihanMenu = 'edit';
+    }
+
+    public function simpanEdit(){
+        $this->validate([
+            'nama' => 'required',
+            'email' => 'required|email|unique:users,email,'.$this->penggunaTerpilih->id,
+            'peran' => 'required',
+        ],[
+            'nama.required' => 'Nama harus diisi',
+            'email.required' => 'Email harus diisi',
+            'email.email' => 'Format harus email',
+            'email.unique' => 'Email telah digunakan',
+            'peran.required' => 'Peran harus dipilih',
+        ]);
+    
+        $simpan = $this->penggunaTerpilih;
+        $simpan->name = $this->nama;
+        $simpan->email = $this->email;
+    
+        // Hanya mengupdate password jika ada password baru yang diinput
+        if($this->password){
+            $simpan->password = bcrypt($this->password);
+        }
+    
+        $simpan->peran = $this->peran;
+        $simpan->save();
+    
+        // Mereset input setelah penyimpanan
+        $this->reset(['nama', 'email', 'password', 'peran', 'penggunaTerpilih']);
+        $this->pilihanMenu = 'lihat';
+    }
+    
+
+    public function pilihHapus($id){
+        $this->penggunaTerpilih = ModelsUser::findOrFail($id);
+        $this->pilihanMenu = 'hapus';
+    }
+
+    public function hapus(){
+        $this->penggunaTerpilih->delete();
+        $this->reset();
+    }
+
+    public function batal(){
+        $this->reset();
+    }
 
     public function simpan(){
         $this->validate([
